@@ -7,12 +7,18 @@ import (
 	"github.com/go-kit/kit/log"
 )
 
-type loggingMiddleware struct {
+type logmw struct {
 	logger log.Logger
 	next   KafkaService
 }
 
-func (mw loggingMiddleware) Consume(ctx context.Context, t string) (output string, err error) {
+func loggingMiddleware(logger log.Logger) ServiceMiddleware {
+	return func(next KafkaService) KafkaService {
+		return logmw{logger, next}
+	}
+}
+
+func (mw logmw) Consume(ctx context.Context, t string) (output string, err error) {
 	defer func(begin time.Time) {
 		mw.logger.Log(
 			"method", "consume",

@@ -8,14 +8,24 @@ import (
 	"github.com/go-kit/kit/metrics"
 )
 
-type instrumentingMiddleware struct {
+func instrumentingMiddleware(
+	requestCount metrics.Counter,
+	requestLatency metrics.Histogram,
+	countResult metrics.Histogram,
+) ServiceMiddleware {
+	return func(next KafkaService) KafkaService {
+		return instrmw{requestCount, requestLatency, countResult, next}
+	}
+}
+
+type instrmw struct {
 	requestCount   metrics.Counter
 	requestLatency metrics.Histogram
 	countResult    metrics.Histogram
 	next           KafkaService
 }
 
-func (mw instrumentingMiddleware) Consume(ctx context.Context, t string) (output string, err error) {
+func (mw instrmw) Consume(ctx context.Context, t string) (output string, err error) {
 	defer func(begin time.Time) {
 		lvs := []string{"method", "consume", "error", fmt.Sprint(err != nil)}
 		mw.requestCount.With(lvs...).Add(1)
