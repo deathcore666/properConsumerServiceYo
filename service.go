@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 //KafkaService yolo
@@ -20,8 +21,27 @@ func (kafkaService) Consume(_ context.Context, topic string) (string, error) {
 	if topic == "" {
 		return "", ErrEmpty
 	}
-	/* TODO: implement kafka logic here*/
-	return "Messages...", nil
+
+	var inChan = make(chan string)
+	var readyChan = make(chan struct{})
+	var result string
+	go kafkaRoutine(inChan, topic)
+	go func() {
+		for {
+			select {
+			case msg := <-inChan:
+				result = result + msg + "\n"
+			case <-time.After(time.Second * 1):
+				readyChan <- struct{}{}
+			}
+
+		}
+	}()
+
+	<-readyChan
+
+	return result, nil
+
 }
 
 //ServiceMiddleware is a chainable thing for the service

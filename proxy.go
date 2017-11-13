@@ -23,11 +23,13 @@ import (
 )
 
 func proxyingMiddleware(ctx context.Context, instances string, logger log.Logger) ServiceMiddleware {
+	//if 0 proxies go on with your life
 	if instances == "" {
 		logger.Log("proxy_to", "none")
 		return func(next KafkaService) KafkaService { return next }
 	}
 
+	//else manage that stuff
 	var (
 		qps         = 100
 		maxAttempts = 3
@@ -47,6 +49,7 @@ func proxyingMiddleware(ctx context.Context, instances string, logger log.Logger
 		endpointer = append(endpointer, e)
 	}
 
+	//load balancing endpoint here
 	balancer := lb.NewRoundRobin(endpointer)
 	retry := lb.Retry(maxAttempts, maxTime, balancer)
 

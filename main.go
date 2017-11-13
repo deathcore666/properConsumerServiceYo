@@ -58,5 +58,5 @@ func main() {
 	http.Handle("/consume", consumehandler)
 	http.Handle("/metrics", promhttp.Handler())
 	logger.Log("msg", "HTTP", "addr", *listen)
-	logger.Log("err", http.ListenAndServe(":8080", nil))
+	logger.Log("err", http.ListenAndServe(*listen, nil))
 }
